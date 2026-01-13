@@ -9,3 +9,7 @@ firebase-admin
 flask
 flask-cors
 python-dotenv
+flask
+flask-cors
+firebase-admin
+gunicorn
