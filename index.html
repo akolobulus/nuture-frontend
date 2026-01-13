@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuture - Student Health Insurance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+    <!-- GSAP for Professional Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                green: '#00A859',
+              },
+            },
+            boxShadow: {
+              'glow-green': '0 0 15px #00A859',
+              'inner-glow': 'inset 0 0 20px rgba(0, 168, 89, 0.2)',
+            },
+            backgroundImage: {
+              'medical-icons': "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBzdHJva2U9IiMwMEE4NTkiIHN0cm9rZS13aWR0aD0iMS41IiBmaWxsPSJub25lIiBvcGFjaXR5PSIwLjUiPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQwIDUwKSByb3RhdGUoNDUpIHNjYWxlKDIpIj48cGF0aCBkPSJNNCAwIEE0IDQgMCAwIDAgNCA4IFoiIC8+PGxpbmUgeDE9IjQiIHkxPSIwIiB4Mj0iNCIgeTI9IjgiIC8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEzMCAxNDApIHJvdGF0ZSgtMzApIHNjYWxlKDIpIj48cGF0aCBkPSJNMTggMiBMNCAxNiBNMTQgNmw0IDQgTTQgMTJsNCA0IiAvPjwvZz48L2c+PC9zdmc+')",
+              'pulse-wave': "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMjAwIDUwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0wIDI1IEg0MCBMNTAgMTUgTDYwIDM1IEw3MCAyMCBMODAgMzAgSDIwMCIgc3Ryb2tlPSIjMDBBODU5IiBmaWxsPSJub25lIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=')",
+            },
+            animation: {
+              'grid-pan': 'grid-pan 60s linear infinite',
+              'icons-pan': 'icons-pan 45s linear infinite',
+              'pulse-pan': 'pulse-pan 10s linear infinite',
+              'float': 'float 4s ease-in-out infinite',
+            },
+            keyframes: {
+              'grid-pan': {
+                '0%': { backgroundPosition: '0% 0%' },
+                '100%': { backgroundPosition: '100px 100px' },
+              },
+              'icons-pan': {
+                '0%': { backgroundPosition: '0% 100%' },
+                '100%': { backgroundPosition: '100% 0%' },
+              },
+              'pulse-pan': {
+                '0%': { backgroundPosition: '200px 0' },
+                '100%': { backgroundPosition: '0 0' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-15px)' },
+              },
+            }
+          },
+        },
+      }
+    </script>
+    <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.5"
+  }
+}
+</script>
+<style>
+  .gsap-reveal { opacity: 0; }
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: #f3f4f6;
+  }
+  .dark .skeleton {
+    background-color: #1f2937;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.05) 20%,
+      rgba(255, 255, 255, 0.1) 60%,
+      rgba(255, 255, 255, 0)
+    );
+    animation: shimmer-skeleton 2s infinite linear;
+  }
+  @keyframes shimmer-skeleton {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .perspective-1000 { perspective: 1000px; }
+  .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-200 antialiased transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
