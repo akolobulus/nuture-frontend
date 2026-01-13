@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-// Changed LinkIcon to ExternalLinkIcon or similar based on standard naming
 import { 
     VaultIcon, UploadIcon, LockClosedIcon, LockOpenIcon, 
-    ShareIcon, TrashIcon, FileTextIcon, UserPlusIcon 
+    ShareIcon, FileTextIcon, UserPlusIcon 
 } from '../components/IconComponents';
 import Button from '../components/Button';
 import { VaultDocument, NextOfKin } from '../types';
+
+// Fix for 'Property env does not exist on type ImportMeta'
+const API_URL = (import.meta as any).env.VITE_API_URL;
 
 const VaultPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'records' | 'emergency'>('records');
@@ -20,7 +22,8 @@ const VaultPage: React.FC = () => {
         const fetchVaultData = async () => {
             if (!session.uid) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/vault/get/${session.uid}`);
+                // Fixed: Using dynamic API_URL for Render
+                const res = await fetch(`${API_URL}/api/vault/get/${session.uid}`);
                 if (res.ok) {
                     const data = await res.json();
                     setDocuments(data);
@@ -41,7 +44,8 @@ const VaultPage: React.FC = () => {
             const file = e.target.files[0];
 
             try {
-                const response = await fetch('http://localhost:5000/api/vault/add', {
+                // Fixed: Using dynamic API_URL for Render
+                const response = await fetch(`${API_URL}/api/vault/add`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -57,7 +61,7 @@ const VaultPage: React.FC = () => {
                     setDocuments([newDoc, ...documents]);
                 }
             } catch (err) { 
-                alert("Blockchain anchoring failed."); 
+                alert("Blockchain anchoring failed. Check your connection."); 
             } finally { 
                 setUploading(false); 
             }
@@ -82,7 +86,8 @@ const VaultPage: React.FC = () => {
     };
 
     const handleShareDoc = (doc: any) => {
-        navigator.clipboard.writeText(`https://nuture.app/share/${doc.cid}`);
+        // Updated: Using Vercel URL for share links
+        navigator.clipboard.writeText(`https://nuture-final.vercel.app/#/vault/share/${doc.cid}`);
         alert(`Encrypted share link generated for ${doc.name}!`);
     };
 
@@ -118,7 +123,7 @@ const VaultPage: React.FC = () => {
                 {activeTab === 'records' && (
                     <div>
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-white">Stored Documents</h2>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Stored Documents</h2>
                             <label className="cursor-pointer bg-brand-green hover:bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
                                 <UploadIcon className="w-4 h-4" />
                                 {uploading ? 'Anchoring...' : 'Secure New Record'}
@@ -129,24 +134,24 @@ const VaultPage: React.FC = () => {
                         {documents.length > 0 ? (
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {documents.map((doc: any) => (
-                                    <div key={doc.id} className="bg-gray-900/50 p-5 rounded-xl border border-gray-700 hover:border-brand-green transition-all group">
+                                    <div key={doc.id} className="bg-gray-50 dark:bg-gray-900/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-brand-green transition-all group">
                                         <div className="flex justify-between items-start mb-4">
                                             <FileTextIcon className="w-8 h-8 text-brand-green" />
                                             <button onClick={() => handleShareDoc(doc)} className="p-2 text-gray-400 hover:text-brand-green">
                                                 <ShareIcon className="w-4 h-4" />
                                             </button>
                                         </div>
-                                        <h3 className="font-semibold text-white truncate">{doc.name}</h3>
+                                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">{doc.name}</h3>
                                         <p className="text-[10px] font-mono text-gray-500 mt-1 truncate">CID: {doc.cid}</p>
                                         <div className="flex justify-between items-center mt-4 text-xs">
                                             <span className="text-gray-500">{doc.size}</span>
-                                            <span className="flex items-center gap-1 text-green-400"><LockClosedIcon className="w-3 h-3" /> Encrypted</span>
+                                            <span className="flex items-center gap-1 text-green-500"><LockClosedIcon className="w-3 h-3" /> Encrypted</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-20 border-2 border-dashed border-gray-700 rounded-xl text-gray-500">
+                            <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-gray-500">
                                 Your Vault is empty. Upload medical records to secure them on the blockchain.
                             </div>
                         )}
@@ -156,12 +161,12 @@ const VaultPage: React.FC = () => {
                 {activeTab === 'emergency' && (
                     <div className="grid lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2 space-y-6">
-                            <div className={`p-6 rounded-xl border-2 ${isEmergencyUnlocked ? 'border-red-500 bg-red-500/5' : 'border-brand-green/30 bg-gray-900'}`}>
-                                <h3 className="font-bold text-white flex items-center gap-2 mb-2">
+                            <div className={`p-6 rounded-xl border-2 ${isEmergencyUnlocked ? 'border-red-500 bg-red-500/5' : 'border-brand-green/30 bg-gray-50 dark:bg-gray-900'}`}>
+                                <h3 className={`font-bold flex items-center gap-2 mb-2 ${isEmergencyUnlocked ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
                                     {isEmergencyUnlocked ? <LockOpenIcon className="text-red-500 animate-pulse" /> : <LockClosedIcon className="text-brand-green" />}
                                     Vault Status: {isEmergencyUnlocked ? 'UNLOCKED' : 'SECURE'}
                                 </h3>
-                                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
                                     <div className={`h-2 rounded-full transition-all duration-700 ${isEmergencyUnlocked ? 'bg-red-500' : 'bg-brand-green'}`} style={{ width: `${(accessApprovals / 3) * 100}%` }}></div>
                                 </div>
                                 <p className="text-xs text-gray-500">3/5 verified approvals required to release emergency keys.</p>
@@ -170,13 +175,13 @@ const VaultPage: React.FC = () => {
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-gray-500 uppercase">Trusted Contacts (Next of Kin)</h3>
                                 {kins.map((kin) => (
-                                    <div key={kin.id} className="flex items-center justify-between p-4 bg-gray-900/40 border border-gray-700 rounded-xl">
+                                    <div key={kin.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-xl">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-brand-green/20 flex items-center justify-center text-brand-green font-bold">
                                                 {kin.name.charAt(0).toUpperCase()}
                                             </div>
                                             <div>
-                                                <p className="text-white font-medium">{kin.name}</p>
+                                                <p className="text-gray-900 dark:text-white font-medium">{kin.name}</p>
                                                 <p className="text-xs text-gray-500">{kin.email}</p>
                                             </div>
                                         </div>
@@ -191,14 +196,14 @@ const VaultPage: React.FC = () => {
                                         placeholder="Add kin email..." 
                                         value={newKinEmail} 
                                         onChange={(e) => setNewKinEmail(e.target.value)}
-                                        className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:ring-1 focus:ring-brand-green"
+                                        className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-gray-900 dark:text-white outline-none focus:ring-1 focus:ring-brand-green"
                                     />
                                     <Button type="submit" className="!px-4"><UserPlusIcon className="w-5 h-5" /></Button>
                                 </form>
                             </div>
                         </div>
                         
-                        <div className="bg-gray-900 p-6 rounded-xl border border-gray-700 h-fit">
+                        <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 h-fit">
                             <h3 className="text-xs font-bold text-gray-500 uppercase mb-4 tracking-widest">Emergency Simulator</h3>
                             <p className="text-[10px] text-gray-500 mb-4 italic">Simulate kin members providing their decryption keys during a medical emergency.</p>
                             <div className="space-y-2">
@@ -206,7 +211,7 @@ const VaultPage: React.FC = () => {
                                     <button 
                                         key={kin.id} 
                                         onClick={() => toggleAccessRequest(kin.id)} 
-                                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold border transition-all ${kin.hasRequestedAccess ? 'bg-red-500 text-white border-red-400' : 'bg-gray-800 text-gray-400 border-gray-700'}`}
+                                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold border transition-all ${kin.hasRequestedAccess ? 'bg-red-500 text-white border-red-400' : 'bg-gray-200 dark:bg-gray-800 text-gray-500 border-gray-300 dark:border-gray-700'}`}
                                     >
                                         {kin.hasRequestedAccess ? 'Revoke Approval' : `Authorize for ${kin.name}`}
                                     </button>

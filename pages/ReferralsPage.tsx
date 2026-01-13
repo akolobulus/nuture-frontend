@@ -5,6 +5,9 @@ import { Referral } from '../types';
 
 declare const gsap: any;
 
+// Fix for 'Property env does not exist on type ImportMeta'
+const API_URL = (import.meta as any).env.VITE_API_URL;
+
 const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -31,13 +34,16 @@ export default function ReferralsPage() {
     const pageRef = useRef<HTMLDivElement>(null);
 
     const session = JSON.parse(localStorage.getItem('nuture_user_session') || '{}');
-    const referralLink = `https://nuture.app/signup?ref=${refCode || 'LOADING'}`;
+    
+    // Updated: Uses Vercel URL for the sharing link
+    const referralLink = `https://nuture-final.vercel.app/#/sign-up?ref=${refCode || 'LOADING'}`;
 
     useEffect(() => {
         const fetchReferralData = async () => {
             if (!session.uid) return;
             try {
-                const response = await fetch(`http://localhost:5000/api/get-referrals/${session.uid}`);
+                // Fixed: Using dynamic API_URL from Render
+                const response = await fetch(`${API_URL}/api/get-referrals/${session.uid}`);
                 if (response.ok) {
                     const data = await response.json();
                     setRefCode(data.referralCode);
@@ -63,14 +69,16 @@ export default function ReferralsPage() {
         if (!email.trim() || !session.uid) return;
 
         try {
-            const response = await fetch('http://localhost:5000/api/send-referral', {
+            // Fixed: Using dynamic API_URL from Render
+            const response = await fetch(`${API_URL}/api/send-referral`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uid: session.uid, email }),
             });
             if (response.ok) {
                 const data = await response.json();
-                setReferrals([data.referral, ...referrals]);
+                // Update list locally with returned data
+                setReferrals(prev => [data.referral, ...prev]);
                 setEmail("");
                 alert("Referral invitation sent!");
             }
@@ -79,7 +87,7 @@ export default function ReferralsPage() {
         }
     };
 
-    if (isLoading) return <div className="text-center py-20 text-white animate-pulse">Loading Referral Program...</div>;
+    if (isLoading) return <div className="text-center py-20 text-brand-green animate-pulse font-bold">Loading Referral Program...</div>;
 
     const successfulReferrals = referrals.filter(r => r.status === 'completed').length;
     const totalRewards = successfulReferrals * 500;
@@ -100,53 +108,56 @@ export default function ReferralsPage() {
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">
-                {/* How it Works Section */}
                 <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                    <h2 className="text-xl font-bold mb-6 text-white">How It Works</h2>
+                    <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white">How It Works</h2>
                     <div className="space-y-6">
                         <div className="flex items-start gap-4">
                             <div className="w-8 h-8 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold">1</div>
                             <div>
-                                <h3 className="font-semibold text-white">Share Your Link</h3>
-                                <p className="text-sm text-gray-400">Use your unique code: <span className="text-brand-green font-mono">{refCode}</span></p>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">Share Your Link</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Use your unique code: <span className="text-brand-green font-mono font-bold">{refCode}</span></p>
                             </div>
                         </div>
-                        {/* Step 2 and 3 can be added here following same pattern */}
+                        <div className="flex items-start gap-4">
+                            <div className="w-8 h-8 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold">2</div>
+                            <div>
+                                <h3 className="font-semibold text-gray-900 dark:text-white">Friends Sign Up</h3>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">They get protected, and you get rewarded.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Share Box */}
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                    <h2 className="text-xl font-bold mb-4 text-white">Share Link</h2>
+                    <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Share Link</h2>
                     <div className="flex gap-2 mb-6">
-                        <input value={referralLink} readOnly className="font-mono text-xs bg-gray-900 border border-gray-700 rounded-lg w-full px-3 py-2 text-gray-300" />
-                        <button onClick={copyLink} className="p-2 bg-gray-700 rounded-lg">
-                            {copied ? <CheckIcon className="text-green-500" /> : <CopyIcon className="text-gray-400" />}
+                        <input value={referralLink} readOnly className="font-mono text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg w-full px-3 py-2 text-gray-600 dark:text-gray-300" />
+                        <button onClick={copyLink} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-gray-600">
+                            {copied ? <CheckIcon className="text-green-500 h-5 w-5" /> : <CopyIcon className="text-gray-400 h-5 w-5" />}
                         </button>
                     </div>
                     <form onSubmit={handleSubmit} className="space-y-3">
                         <label className="text-xs text-gray-500 uppercase font-bold">Email Invite</label>
                         <div className="flex gap-2">
-                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="friend@nutm.edu.ng" className="bg-gray-900 border border-gray-700 rounded-lg w-full px-3 py-2 text-white text-sm" />
+                            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="friend@nutm.edu.ng" className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg w-full px-3 py-2 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-brand-green outline-none" />
                             <Button type="submit" className="!px-3"><UserPlusIcon className="w-5 h-5" /></Button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            {/* History Table */}
             <div className="mt-8 bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                <h2 className="text-xl font-bold mb-4 text-white">Referral History</h2>
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Referral History</h2>
                 {referrals.length > 0 ? (
                     <div className="space-y-4">
                         {referrals.map((ref) => (
-                            <div key={ref.id} className="flex justify-between items-center p-4 bg-gray-900/50 rounded-xl border border-gray-700">
+                            <div key={ref.id} className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
                                 <div>
-                                    <p className="text-white font-medium">{ref.email}</p>
+                                    <p className="text-gray-900 dark:text-white font-medium">{ref.email}</p>
                                     <p className="text-xs text-gray-500">{formatDate(ref.date)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-brand-green font-bold">+{formatCurrency(ref.reward)}</p>
+                                    <p className="text-brand-green font-bold">+{formatCurrency(ref.reward || 500)}</p>
                                     <span className="text-[10px] uppercase font-bold text-yellow-500">{ref.status}</span>
                                 </div>
                             </div>

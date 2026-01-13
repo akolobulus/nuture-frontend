@@ -3,6 +3,10 @@ import { FileTextIcon, FilterIcon } from '../components/IconComponents';
 import { Claim } from '../types';
 import Button from '../components/Button';
 
+// Fix for 'Property env does not exist on type ImportMeta'
+// This ensures the app pulls the dynamic Render URL instead of localhost
+const API_URL = (import.meta as any).env.VITE_API_URL;
+
 const formatCurrency = (amount: number) => 
   new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' })
     .format(amount)
@@ -16,7 +20,7 @@ const formatDateTime = (dateVal: any) => {
     let date: Date;
     
     if (dateVal?.seconds) {
-      // Handles Firebase Timestamp objects
+      // Handles Firebase Timestamp objects (common in the backend)
       date = new Date(dateVal.seconds * 1000);
     } else if (typeof dateVal === 'string') {
       // Handles ISO strings
@@ -58,10 +62,10 @@ const ClaimsListPage: React.FC = () => {
         if (!session.uid) return;
 
         try {
-            const response = await fetch(`http://localhost:5000/api/get-claims/${session.uid}`);
+            // Fixed: Now using the dynamic API_URL for production deployment
+            const response = await fetch(`${API_URL}/api/get-claims/${session.uid}`);
             if (response.ok) {
                 const data = await response.json();
-                console.log("Claims data received:", data); // Check your browser console!
                 setClaims(data);
             }
         } catch (error) {
@@ -80,7 +84,9 @@ const ClaimsListPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl font-medium text-brand-green animate-pulse">Loading claims...</div>
+        <div className="text-xl font-black text-brand-green animate-pulse uppercase tracking-tighter">
+          Loading Claims History...
+        </div>
       </div>
     );
   }
@@ -90,8 +96,8 @@ const ClaimsListPage: React.FC = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Claims Tracking</h1>
-            <p className="text-gray-600 dark:text-gray-400">Monitor your submitted insurance claims</p>
+            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">Claims Tracking</h1>
+            <p className="text-gray-600 dark:text-gray-400">Monitor your submitted insurance claims and reimbursements</p>
           </div>
           
           <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -100,37 +106,39 @@ const ClaimsListPage: React.FC = () => {
                 <select 
                   value={statusFilter} 
                   onChange={e => setStatusFilter(e.target.value)} 
-                  className="w-full sm:w-[180px] bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg pl-10 pr-4 py-2 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-green"
+                  className="w-full sm:w-[180px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl pl-10 pr-4 py-2 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-brand-green transition-all"
                 >
-                    <option value="all">All Claims</option>
+                    <option value="all">All Statuses</option>
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                 </select>
             </div>
-            <Button as="link" to="/submit-claim" className="!px-6 !py-2 whitespace-nowrap">New Claim</Button>
+            <Button as="link" to="/submit-claim" className="!px-6 !py-2.5 whitespace-nowrap shadow-lg shadow-brand-green/20">
+              New Claim
+            </Button>
           </div>
         </div>
         
         {filteredClaims.length > 0 ? (
           <div className="grid gap-6">
             {filteredClaims.map((claim) => (
-              <div key={claim.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm transition-all hover:border-brand-green/30">
+              <div key={claim.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50 shadow-sm transition-all hover:border-brand-green/30 hover:shadow-md group">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-grow">
                     <div className="flex items-center gap-3 mb-1">
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">{claim.description}</h2>
-                      <span className={`px-3 py-0.5 text-[10px] uppercase tracking-widest font-bold rounded-full ${getStatusColor(claim.status)}`}>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-brand-green transition-colors">{claim.description}</h2>
+                      <span className={`px-3 py-0.5 text-[10px] uppercase tracking-widest font-black rounded-full ${getStatusColor(claim.status)}`}>
                         {claim.status || 'pending'}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Category: <span className="text-gray-700 dark:text-gray-200">{claim.category}</span> • 
-                      Submitted on <span className="text-gray-700 dark:text-gray-200">{formatDateTime(claim.date)}</span>
+                      Category: <span className="text-gray-900 dark:text-gray-200 font-medium">{claim.category}</span> • 
+                      Submitted on <span className="text-gray-900 dark:text-gray-200 font-medium">{formatDateTime(claim.date)}</span>
                     </p>
                   </div>
-                  <div className="flex flex-col md:items-end">
-                    <p className="text-xs text-gray-500 mb-0.5 uppercase font-bold tracking-tighter">Claim Amount</p>
+                  <div className="flex flex-col md:items-end bg-gray-50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <p className="text-[10px] text-gray-500 mb-0.5 uppercase font-black tracking-widest">Requested Amount</p>
                     <p className="text-2xl font-black text-brand-green">{formatCurrency(claim.amount)}</p>
                   </div>
                 </div>
@@ -139,11 +147,13 @@ const ClaimsListPage: React.FC = () => {
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-3xl p-20 text-center border-2 border-dashed border-gray-200 dark:border-gray-700">
-            <FileTextIcon className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No Claims Visible</h3>
-            <p className="text-gray-500 mt-2">If you see claims in Firebase but not here, check the Backend Terminal for a "Create Index" link.</p>
-            <div className="mt-8">
-              <Button as="link" to="/submit-claim" variant="secondary">Submit New Claim</Button>
+            <div className="bg-brand-green/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+               <FileTextIcon className="w-10 h-10 text-brand-green" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">No Claims Visible</h3>
+            <p className="text-gray-500 mt-2 max-w-sm mx-auto">You haven't submitted any insurance claims yet. Once you do, you can track their approval status right here.</p>
+            <div className="mt-10">
+              <Button as="link" to="/submit-claim" variant="secondary" className="px-10">Submit Your First Claim</Button>
             </div>
           </div>
         )}

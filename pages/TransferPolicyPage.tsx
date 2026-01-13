@@ -3,14 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRightIcon, SpinnerIcon } from "../components/IconComponents";
 import Button from "../components/Button";
 
+// Fix for 'Property env does not exist on type ImportMeta'
+const API_URL = (import.meta as any).env.VITE_API_URL;
+
 export default function TransferPolicyPage() {
   const [recipientEmail, setRecipientEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleTransfer = (e: React.FormEvent) => {
+  const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const sessionStr = localStorage.getItem('nuture_user_session');
+    const session = sessionStr ? JSON.parse(sessionStr) : {};
+
+    if (!session.uid) {
+      alert("Please sign in to transfer your policy.");
+      return;
+    }
+
     if (!recipientEmail) {
       alert("Please provide the recipient's email.");
       return;
@@ -18,23 +29,35 @@ export default function TransferPolicyPage() {
 
     setIsLoading(true);
 
-    // Simulate API call and logic
-    setTimeout(() => {
-      try {
-        // In a real app, you'd call a backend here.
-        // For the demo, we just clear the local subscription.
+    try {
+      // Replaced simulation with a real call to your Render backend
+      const response = await fetch(`${API_URL}/api/transfer-policy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderUid: session.uid,
+          recipientEmail: recipientEmail,
+        }),
+      });
+
+      if (response.ok) {
+        // Clear local subscription as it is no longer active for this user
         localStorage.removeItem('nuture_subscription');
+        window.dispatchEvent(new Event('storage'));
 
         alert("Transfer Successful! Your policy has been transferred.");
         navigate("/dashboard");
-
-      } catch (error) {
-        console.error("Transfer error:", error);
-        alert("Transfer Failed. Please try again.");
-      } finally {
-        setIsLoading(false);
+      } else {
+        const err = await response.json();
+        alert("Transfer Failed: " + (err.error || "Please ensure the recipient is a verified student."));
       }
-    }, 2000);
+
+    } catch (error) {
+      console.error("Transfer error:", error);
+      alert("Connection error: Could not reach the backend server.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -89,7 +112,7 @@ export default function TransferPolicyPage() {
                 >
                   {isLoading ? (
                       <>
-                        <SpinnerIcon className="mr-2 h-4 w-4" />
+                        <SpinnerIcon className="mr-2 h-4 w-4 animate-spin" />
                         Processing...
                       </>
                   ) : (

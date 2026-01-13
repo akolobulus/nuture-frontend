@@ -2,22 +2,31 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePaystackPayment } from 'react-paystack';
 import { plans } from '../lib/mockData';
+import { Plan } from '../types';
 import Button from '../components/Button';
+import { SpinnerIcon } from '../components/IconComponents';
 
 declare const gsap: any;
 
-const PlanCard: React.FC<{ plan: typeof plans[0], onSelect: (plan: any) => void }> = ({ plan, onSelect }) => {
+// Type-safe access to Vite environment variables
+const API_URL = (import.meta as any).env.VITE_API_URL;
+
+const PlanCard: React.FC<{ plan: Plan, onSelect: (plan: Plan) => void, isLoading: boolean }> = ({ plan, onSelect, isLoading }) => {
     const isPremium = plan.id === 'premium';
     return (
         <div className={`plan-card bg-white dark:bg-gray-800 p-8 rounded-2xl border-2 flex flex-col transition-all duration-300 ${isPremium ? 'border-brand-green shadow-glow-green' : 'border-gray-200 dark:border-gray-700 shadow-sm'}`}>
-            {isPremium && <div className="text-center mb-4"><span className="bg-brand-green text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span></div>}
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center transition-colors">{plan.name}</h3>
+            {isPremium && (
+                <div className="text-center mb-4">
+                    <span className="bg-brand-green text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
+                </div>
+            )}
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center">{plan.name}</h3>
             <div className="my-6 text-center">
-                <span className="text-5xl font-extrabold text-gray-900 dark:text-white transition-colors">₦{plan.price.toLocaleString()}</span>
-                <span className="text-gray-500 dark:text-gray-400 text-lg transition-colors">/month</span>
+                <span className="text-5xl font-extrabold text-gray-900 dark:text-white">₦{plan.price.toLocaleString()}</span>
+                <span className="text-gray-500 dark:text-gray-400 text-lg">/month</span>
             </div>
             <p className="text-center text-brand-green font-semibold">Covers up to ₦{plan.coverage.toLocaleString()}</p>
-            <ul className="mt-8 space-y-4 text-gray-600 dark:text-gray-300 flex-grow transition-colors">
+            <ul className="mt-8 space-y-4 text-gray-600 dark:text-gray-300 flex-grow">
                 {plan.features.map((feature, fIndex) => (
                     <li key={fIndex} className="flex items-start">
                         <svg className="flex-shrink-0 h-6 w-6 text-brand-green mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -28,8 +37,13 @@ const PlanCard: React.FC<{ plan: typeof plans[0], onSelect: (plan: any) => void 
                 ))}
             </ul>
             <div className="mt-10">
-                <Button onClick={() => onSelect(plan)} variant={isPremium ? 'primary' : 'secondary'} className="w-full">
-                    Choose {plan.name}
+                <Button 
+                    onClick={() => onSelect(plan)} 
+                    variant={isPremium ? 'primary' : 'secondary'} 
+                    className="w-full flex justify-center items-center"
+                    disabled={isLoading}
+                >
+                    {isLoading ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : `Choose ${plan.name}`}
                 </Button>
             </div>
         </div>
@@ -39,9 +53,9 @@ const PlanCard: React.FC<{ plan: typeof plans[0], onSelect: (plan: any) => void 
 const PlansPage: React.FC = () => {
     const navigate = useNavigate();
     const pageRef = useRef<HTMLDivElement>(null);
-    const [selectedPlan, setSelectedPlan] = useState<any>(null);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     
-    // Get user session data safely
     const sessionStr = localStorage.getItem('nuture_user_session');
     const user = sessionStr ? JSON.parse(sessionStr) : null;
 
@@ -54,25 +68,19 @@ const PlansPage: React.FC = () => {
         return () => ctx.revert();
     }, []);
 
-    // Paystack Configuration
     const paystackConfig = {
-        reference: (new Date()).getTime().toString(),
+        reference: `NUTM_${new Date().getTime()}`,
         email: user?.email || "",
-        amount: (selectedPlan?.price || 0) * 100, // Amount in kobo
+        amount: (selectedPlan?.price || 0) * 100, // Kobo
         publicKey: 'pk_test_2b4b105d6b6c994e2c822b0475e2966d49b2f60b',
     };
 
     const initializePayment = usePaystackPayment(paystackConfig);
 
-    // This handles the backend update after payment is successful
     const handleBackendSubscription = async (reference: any, planId: string) => {
-        if (!user?.uid) {
-            alert("User session not found. Please sign in again.");
-            return;
-        }
-
+        setIsProcessing(true);
         try {
-            const response = await fetch('http://localhost:5000/api/subscribe', {
+            const response = await fetch(`${API_URL}/api/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -85,41 +93,40 @@ const PlansPage: React.FC = () => {
             const result = await response.json();
 
             if (response.ok) {
-                // Save subscription to local storage for immediate UI update
                 localStorage.setItem('nuture_subscription', JSON.stringify(result.subscription));
                 window.dispatchEvent(new Event('storage'));
-                alert("Payment Successful! Your policy is now active.");
+                alert("Payment Successful! Welcome to Nuture.");
                 navigate('/dashboard');
             } else {
-                alert("Error from server: " + (result.error || "Could not update subscription"));
+                alert("Subscription Error: " + (result.error || "Please contact support."));
             }
         } catch (error) {
-            console.error("Subscription update failed:", error);
-            alert("Connection error: Could not reach the backend server.");
+            alert("Network Error: Could not verify payment with the server.");
+        } finally {
+            setIsProcessing(false);
         }
     };
 
-    const handlePlanSelection = (plan: any) => {
+    const handlePlanSelection = (plan: Plan) => {
         if (!user) {
-            alert("Please sign in first.");
+            alert("Please sign in to choose a plan.");
             navigate('/sign-in');
             return;
         }
         setSelectedPlan(plan);
     };
 
-    // Trigger Paystack popup when a plan is selected
     useEffect(() => {
         if (selectedPlan) {
-            // Store the planId locally to ensure it's available in the callback
-            const currentPlanId = selectedPlan.id; 
-            
+            const planId = selectedPlan.id; 
             initializePayment({
-                onSuccess: (reference: any) => handleBackendSubscription(reference, currentPlanId),
-                onClose: () => alert("Transaction cancelled.")
+                onSuccess: (ref: any) => handleBackendSubscription(ref, planId),
+                onClose: () => {
+                    alert("Payment cancelled.");
+                    setSelectedPlan(null);
+                }
             });
-            
-            setSelectedPlan(null); // Reset selection
+            setSelectedPlan(null); 
         }
     }, [selectedPlan, initializePayment]);
 
@@ -127,14 +134,19 @@ const PlansPage: React.FC = () => {
         <div ref={pageRef} className="py-16 sm:py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="plans-header text-center">
-                    <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white transition-colors">Choose Your Plan</h2>
-                    <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400 transition-colors">
-                        Simple, affordable plans designed for the dynamic life of a student.
+                    <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white">Choose Your Plan</h2>
+                    <p className="mt-4 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400">
+                        Select a plan that fits your semester needs. You can transfer unused coverage later!
                     </p>
                 </div>
                 <div className="mt-16 grid gap-8 lg:grid-cols-3 max-w-lg mx-auto lg:max-w-none">
                     {plans.map((plan) => (
-                        <PlanCard key={plan.id} plan={plan} onSelect={handlePlanSelection} />
+                        <PlanCard 
+                            key={plan.id} 
+                            plan={plan} 
+                            onSelect={handlePlanSelection} 
+                            isLoading={isProcessing}
+                        />
                     ))}
                 </div>
             </div>

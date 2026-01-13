@@ -21,6 +21,7 @@ const HomePage: React.FC = () => {
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Artificial delay to prevent Flash of Unstyled Content (FOUC) during hydration
     const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
@@ -31,13 +32,13 @@ const HomePage: React.FC = () => {
     gsap.registerPlugin(ScrollTrigger);
 
     const ctx = gsap.context(() => {
-      // 1. Simple Hero Entrance
+      // 1. Hero Entrance Animation
       gsap.fromTo(".hero-content", 
         { opacity: 0, y: 20 },
         { duration: 0.6, opacity: 1, y: 0, ease: "power2.out", delay: 0.1 }
       );
 
-      // 2. Simple Benefits Stagger
+      // 2. Benefits Staggered Scroll Reveal
       gsap.fromTo(".benefit-card", 
         { opacity: 0, y: 20 },
         {
@@ -55,7 +56,7 @@ const HomePage: React.FC = () => {
         }
       );
 
-      // 3. Simple FAQ Reveal
+      // 3. FAQ Section Reveal
       gsap.fromTo(".faq-section", 
         { opacity: 0, y: 15 },
         {
@@ -70,7 +71,7 @@ const HomePage: React.FC = () => {
         }
       );
 
-      // 4. Simple CTA Reveal
+      // 4. Call to Action (CTA) Container Pop
       gsap.fromTo(".cta-container", 
         { opacity: 0, scale: 0.98 },
         {
@@ -95,20 +96,23 @@ const HomePage: React.FC = () => {
     return (
         <div className="space-y-24 pb-24 px-4 overflow-hidden">
             <section className="pt-20 pb-10 flex flex-col items-center">
-                <div className="skeleton w-3/4 h-16 rounded-2xl mb-6"></div>
-                <div className="skeleton w-1/2 h-8 rounded-xl"></div>
+                <div className="skeleton w-3/4 h-16 rounded-2xl mb-6 bg-gray-200 dark:bg-gray-700"></div>
+                <div className="skeleton w-1/2 h-8 rounded-xl bg-gray-200 dark:bg-gray-700"></div>
             </section>
             <section className="max-w-7xl mx-auto grid gap-8 md:grid-cols-2 lg:grid-cols-5">
-                {[...Array(5)].map((_, i) => <div key={i} className="skeleton h-64 rounded-2xl"></div>)}
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="skeleton h-64 rounded-2xl bg-gray-200 dark:bg-gray-700"></div>
+                ))}
             </section>
         </div>
     );
   }
 
   return (
-    <div ref={mainRef} className="space-y-24 md:space-y-32 pb-24 overflow-hidden">
+    <div ref={mainRef} className="space-y-24 md:space-y-32 pb-24 overflow-hidden transition-colors duration-500">
       {/* Hero Section */}
       <section className="relative pt-20 pb-10 text-center">
+        {/* Animated Background Layers */}
         <div className="absolute inset-0 z-0 pointer-events-none" style={{ maskImage: 'radial-gradient(ellipse 85% 70% at 50% 50%, black 35%, transparent 100%)', WebkitMaskImage: 'radial-gradient(ellipse 85% 70% at 50% 50%, black 35%, transparent 100%)' }}>
           <div className="absolute inset-0 animate-grid-pan opacity-10 dark:opacity-30" style={{ backgroundImage: 'linear-gradient(to right, #00A859 1px, transparent 1px), linear-gradient(to bottom, #00A859 1px, transparent 1px)', backgroundSize: '50px 50px' }}></div>
           <div className="absolute inset-0 bg-medical-icons bg-repeat animate-icons-pan opacity-10 dark:opacity-40"></div>
@@ -123,7 +127,7 @@ const HomePage: React.FC = () => {
             Affordable healthcare coverage designed exclusively for NUTM students. Get protected, stay healthy, and focus on your studies.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <Button as="link" to="/plans" variant="primary" className="w-full sm:w-auto">View Plans</Button>
+            <Button as="link" to="/plans" variant="primary" className="w-full sm:w-auto shadow-lg shadow-brand-green/20">View Plans</Button>
             <Button as="link" to="/dashboard" variant="secondary" className="w-full sm:w-auto">Go to Dashboard</Button>
           </div>
         </div>
