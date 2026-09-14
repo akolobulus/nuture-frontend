@@ -1,4 +1,4 @@
-/// this is the accordi
+/// this is the accor
 import React, { useState } from 'react';
 import { ChevronDownIcon } from './IconComponents';
 import { FAQItem } from '../types';
