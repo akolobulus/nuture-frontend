@@ -1,4 +1,4 @@
-/// this is the ac
+/// this is the a
 import React, { useState } from 'react';
 import { ChevronDownIcon } from './IconComponents';
 import { FAQItem } from '../types';
