@@ -1,4 +1,4 @@
-/// this is t
+/// this is 
 import React, { useState } from 'react';
 import { ChevronDownIcon } from './IconComponents';
 import { FAQItem } from '../types';
