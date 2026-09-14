@@ -1,4 +1,4 @@
-/// this is the accor
+/// this is the acc
 import React, { useState } from 'react';
 import { ChevronDownIcon } from './IconComponents';
 import { FAQItem } from '../types';
