@@ -1,4 +1,4 @@
-//hell,rkof this is anypkr jggkNIKIK ikbiBjjfbj
+//hell,rkof this is anypkr jggkNIKIK ikbiBjjfb
 # Nuture: Secure Student Health Insurance & Digital Vault
 
 **Nuture** is a decentralized health insurance platform specifically designed for NUTM students. It combines modern fintech payment processing, a cloud-based claims system, and a blockchain-simulated digital health vault to provide students with transparent and immediate medical coverage.
