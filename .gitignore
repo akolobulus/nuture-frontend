@@ -12,7 +12,7 @@ dist
 dist-ssr
 *.local
 
-# Edio
+# Eio
 .vscode/*
 !.vscode/extensions.json
 .idea
